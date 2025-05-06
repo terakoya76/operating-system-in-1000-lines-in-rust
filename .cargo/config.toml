@@ -1,0 +1,10 @@
+[target.riscv32i-unknown-none-elf]
+runner = "qemu-system-riscv32 -machine virt -bios default -nographic -serial mon:stdio --no-reboot -kernel"
+rustflags = [
+  # https://doc.rust-lang.org/rustc/codegen-options/index.html
+  "-C", "link-arg=-Tkernel.ld",
+  "-C", "link-arg=-Map=kernel.map",
+]
+
+[build]
+target = "riscv32i-unknown-none-elf"
