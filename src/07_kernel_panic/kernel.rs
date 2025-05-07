@@ -1,0 +1,59 @@
+#![no_std]
+#![no_main]
+
+mod common;
+
+extern "C" {
+    static __bss: u8;
+    static __bss_end: u8;
+    static __stack_top: u8;
+}
+
+#[no_mangle]
+fn memset(buf: *mut u8, c: u8, n: usize) {
+    let p = buf;
+    let mut i = 0;
+    while i < n {
+        unsafe {
+            *p.add(i) = c;
+            i += 1;
+        }
+    }
+}
+
+#[no_mangle]
+fn kernel_main() -> ! {
+   unsafe {
+       let bss_size = &__bss_end as *const u8 as usize - &__bss as *const u8 as usize;
+       memset(&__bss as *const u8 as *mut u8, 0, bss_size);
+   }
+
+   panic!("booted!");
+   common::println!("unreachable here!\n");
+
+   loop {}
+}
+
+#[no_mangle]
+#[link_section = ".text.boot"]
+pub unsafe extern "C" fn boot() -> ! {
+    // asm macro
+    // - https://doc.rust-lang.org/nightly/rust-by-example/unsafe/asm.html
+    core::arch::asm!(
+        "mv sp, {stack_top}\n
+         j {kernel_main}\n",
+        // asm template
+        // https://doc.rust-lang.org/reference/inline-assembly.html#r-asm.ts-args.order
+        stack_top = in(reg) &__stack_top,
+        // asm sym
+        // https://doc.rust-lang.org/reference/inline-assembly.html#r-asm.operand-type.supported-operands.sym
+        kernel_main = sym kernel_main,
+        options(noreturn)
+    );
+}
+
+#[panic_handler]
+fn panic(info: &core::panic::PanicInfo) -> ! {
+    common::println!("{}", info);
+    loop {}
+}
