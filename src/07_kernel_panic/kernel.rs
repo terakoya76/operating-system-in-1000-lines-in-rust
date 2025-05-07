@@ -23,15 +23,15 @@ fn memset(buf: *mut u8, c: u8, n: usize) {
 
 #[no_mangle]
 fn kernel_main() -> ! {
-   unsafe {
-       let bss_size = &__bss_end as *const u8 as usize - &__bss as *const u8 as usize;
-       memset(&__bss as *const u8 as *mut u8, 0, bss_size);
-   }
+    unsafe {
+        let bss_size = &__bss_end as *const u8 as usize - &__bss as *const u8 as usize;
+        memset(&__bss as *const u8 as *mut u8, 0, bss_size);
+    }
 
-   panic!("booted!");
-   common::println!("unreachable here!\n");
+    panic!("booted!");
+    common::println!("unreachable here!");
 
-   loop {}
+    loop {}
 }
 
 #[no_mangle]

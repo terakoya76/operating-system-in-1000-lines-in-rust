@@ -8,8 +8,6 @@ extern "C" {
     static __bss: u8;
     static __bss_end: u8;
     static __stack_top: u8;
-    static __free_ram: u8;
-    static __free_ram_end: u8;
 }
 
 #[no_mangle]
@@ -37,13 +35,6 @@ fn kernel_main() -> ! {
         memset(&__bss as *const u8 as *mut u8, 0, bss_size);
     }
 
-    common::println!("\n\nHello {}\n", "World!");
-
-    let paddr0 = alloc_pages(2);
-    let paddr1 = alloc_pages(1);
-    common::println!("alloc_pages test: paddr0={:x}", paddr0);
-    common::println!("alloc_pages test: paddr1={:x}", paddr1);
-
     common::write_csr!("stvec", kernel_entry);
     unsafe {
         core::arch::asm!("unimp", options(nomem, nostack)); // 無効な命令
@@ -63,37 +54,6 @@ fn memset(buf: *mut u8, c: u8, n: usize) {
             *p.add(i) = c;
             i += 1;
         }
-    }
-}
-
-const PAGE_SIZE: usize = 4096;
-
-// 物理アドレスの型
-type PAddr = usize;
-
-#[no_mangle]
-fn alloc_pages(n: u32) -> PAddr {
-    // staticを使って前回の割り当て位置を記憶
-    static mut NEXT_PADDR: PAddr = 0;
-
-    unsafe {
-        // 初期化が必要な場合（最初の呼び出し時）
-        if NEXT_PADDR == 0 {
-            NEXT_PADDR = &__free_ram as *const u8 as PAddr;
-        }
-
-        let paddr = NEXT_PADDR;
-        NEXT_PADDR += (n as usize) * PAGE_SIZE;
-
-        // メモリ範囲チェック
-        if NEXT_PADDR > (&__free_ram_end as *const u8 as PAddr) {
-            panic!("out of memory");
-        }
-
-        // 割り当てたメモリをゼロクリア
-        memset(paddr as *mut u8, 0, (n as usize) * PAGE_SIZE);
-
-        paddr
     }
 }
 
