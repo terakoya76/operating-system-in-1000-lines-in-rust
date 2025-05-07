@@ -28,19 +28,19 @@ macro_rules! println {
 pub(crate) use println;
 
 /*
-   5.2. Extension: Console Putchar (EID #0x01)
+  5.2. Extension: Console Putchar (EID #0x01)
 
 
-   ```
-     long sbi_console_putchar(int ch)
-   ```
+  ```
+    long sbi_console_putchar(int ch)
+  ```
 
-   Write data present in ch to debug console.
-   Unlike `sbi_console_getchar()`, this SBI call will block if there remain any pending characters to be transmitted or if the receiving terminal is not yet ready to receive the byte.
-   However, if the console doesn’t exist at all, then the character is thrown away.
-   This SBI call returns 0 upon success or an implementation specific negative error code.
-   -- "RISC-V Supervisor Binary Interface Specification" v2.0-rc1 より引用
- */
+  Write data present in ch to debug console.
+  Unlike `sbi_console_getchar()`, this SBI call will block if there remain any pending characters to be transmitted or if the receiving terminal is not yet ready to receive the byte.
+  However, if the console doesn’t exist at all, then the character is thrown away.
+  This SBI call returns 0 upon success or an implementation specific negative error code.
+  -- "RISC-V Supervisor Binary Interface Specification" v2.0-rc1 より引用
+*/
 fn putchar(ch: char) {
     /*
        SBIが呼ばれると、次のような流れで文字が表示されます。
@@ -51,7 +51,16 @@ fn putchar(ch: char) {
        5. QEMUの8250 UARTエミュレーション実装が文字を受け取り、標準出力に文字を送る。
        6. 端末エミュレータがその文字を表示する。
     */
-    sbi_call(ch as isize, 0, 0, 0, 0, 0, 0, 1 /* ExtensionID = 1 (Console Putchar) */);
+    sbi_call(
+        ch as isize,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1, /* ExtensionID = 1 (Console Putchar) */
+    );
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -61,21 +70,27 @@ pub struct SbiRet {
 }
 
 /*
-   Chapter 3. Binary Encoding
+  Chapter 3. Binary Encoding
 
-   All SBI functions share a single binary encoding, which facilitates the mixing of SBI extensions.
-   The SBI specification follows the below calling convention.
+  All SBI functions share a single binary encoding, which facilitates the mixing of SBI extensions.
+  The SBI specification follows the below calling convention.
 
-   1. An ECALL is used as the control transfer instruction between the supervisor and the SEE.
-   2. a7 encodes the SBI extension ID (EID),
-   3. a6 encodes the SBI function ID (FID) for a given extension ID encoded in a7 for any SBI extension defined in or after SBI v0.2.
-   4. All registers except a0 & a1 must be preserved across an SBI call by the callee.
-   5. SBI functions must return a pair of values in a0 and a1, with a0 returning an error code.
-      This is analogous to returning the C structure
- */
+  1. An ECALL is used as the control transfer instruction between the supervisor and the SEE.
+  2. a7 encodes the SBI extension ID (EID),
+  3. a6 encodes the SBI function ID (FID) for a given extension ID encoded in a7 for any SBI extension defined in or after SBI v0.2.
+  4. All registers except a0 & a1 must be preserved across an SBI call by the callee.
+  5. SBI functions must return a pair of values in a0 and a1, with a0 returning an error code.
+     This is analogous to returning the C structure
+*/
 fn sbi_call(
-    arg0: isize, arg1: isize, arg2: isize, arg3: isize,
-    arg4: isize, arg5: isize, fid: isize, eid: isize
+    arg0: isize,
+    arg1: isize,
+    arg2: isize,
+    arg3: isize,
+    arg4: isize,
+    arg5: isize,
+    fid: isize,
+    eid: isize,
 ) -> SbiRet {
     let mut a0 = arg0;
     let mut a1 = arg1;
@@ -109,7 +124,10 @@ fn sbi_call(
         );
     }
 
-    SbiRet { error: a0, value: a1 }
+    SbiRet {
+        error: a0,
+        value: a1,
+    }
 }
 
 macro_rules! read_csr {

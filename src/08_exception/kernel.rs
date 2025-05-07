@@ -189,9 +189,7 @@ unsafe fn handle_trap(_f: *mut TrapFrame) {
 
     panic!(
         "unexpected trap scause={:x}, stval={:x}, sepc={:x}",
-        scause,
-        stval,
-        user_pc,
+        scause, stval, user_pc,
     );
 }
 
