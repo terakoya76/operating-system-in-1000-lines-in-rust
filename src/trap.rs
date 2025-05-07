@@ -59,11 +59,15 @@ struct TrapFrame {
 #[no_mangle]
 #[repr(align(4))]
 pub unsafe extern "C" fn kernel_entry() {
+    /*
+    SCRATCHレジスタ
+    - カーネルが自由に利用してよいレジスタとしてMSCRATCH、SSCRATCHと呼ばれるレジスタが用意されている。
+    - 割り込み・例外エントリ処理など、汎用レジスタの値を壊すことが許されない処理において、汎用レジスタの値の一時退避先として利用することができる。
+    */
     core::arch::asm!(
-        // SCRATCHレジスタ
-        // - カーネルが自由に利用してよいレジスタとしてMSCRATCH、SSCRATCHと呼ばれるレジスタが用意されている。
-        // - 割り込み・例外エントリ処理など、汎用レジスタの値を壊すことが許されない処理において、汎用レジスタの値の一時退避先として利用することができる。
-        "csrw sscratch, sp",
+        // 実行中プロセスのカーネルスタックをsscratchから取り出す
+        // tmp = sp; sp = sscratch; sscratch = tmp;
+        "csrrw sp, sscratch, sp",
         // 全ての汎用レジスタ（ra, gp, tp, t0〜t6, a0〜a7, s0〜s11）をスタックに保存
         "addi sp, sp, -4 * 31",
         "sw ra,  4 * 0(sp)",
@@ -96,9 +100,21 @@ pub unsafe extern "C" fn kernel_entry() {
         "sw s9,  4 * 27(sp)",
         "sw s10, 4 * 28(sp)",
         "sw s11, 4 * 29(sp)",
-        // 元のスタックポインタも退避
+        // 例外発生時のspを取り出して保存
         "csrr a0, sscratch",
         "sw a0, 4 * 30(sp)",
+        // 「例外発生時のスタックポインタを信頼しない」ために、カーネルスタックを設定し直す
+        // そもそも、なぜ信頼すべきではないのか考えてみましょう。
+        // 例外ハンドラでは、次の3つのパターンを考慮する必要があります。
+        // 1. カーネルモードで例外が発生した
+        //   - スタックポインタを設定し直さなくても基本的に問題ありません
+        // 2. 例外処理中にカーネルモードで例外が発生した (ネストされた例外)
+        //   - 退避領域を上書きしてしまいますが、本実装ではネストされた例外からの復帰を想定せずカーネルパニックして停止するため問題ありません
+        // 3. ユーザーモードで例外が発生した
+        //   - このとき、spは「ユーザー (アプリケーション) のスタック領域」を指しています。
+        //   - spをそのまま利用する (信頼する) 実装の場合では、不正な値をセットして例外を発生させると、カーネルをクラッシュさせる脆弱性に繋がります
+        "addi a0, sp, 4 * 31",
+        "csrw sscratch, a0",
         // 新しいスタックポインタを引数に設定して、
         // トラップハンドラ呼び出し
         "mv a0, sp",
@@ -144,6 +160,7 @@ pub unsafe extern "C" fn kernel_entry() {
     );
 }
 
+#[no_mangle]
 unsafe fn handle_trap(_f: *mut TrapFrame) {
     let scause = read_csr!("scause");
     let stval = read_csr!("stval");
@@ -151,8 +168,6 @@ unsafe fn handle_trap(_f: *mut TrapFrame) {
 
     panic!(
         "unexpected trap scause={:x}, stval={:x}, sepc={:x}",
-        scause,
-        stval,
-        user_pc,
+        scause, stval, user_pc,
     );
 }

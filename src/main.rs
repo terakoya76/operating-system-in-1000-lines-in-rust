@@ -4,6 +4,7 @@
 
 mod common;
 mod memory;
+mod process;
 mod trap;
 
 extern "C" {
@@ -45,9 +46,19 @@ fn kernel_main() -> ! {
     common::println!("alloc_pages test: paddr1={:x}", paddr1);
 
     trap::write_csr!("stvec", trap::kernel_entry);
+
     unsafe {
-        core::arch::asm!("unimp", options(nomem, nostack)); // 無効な命令
+        process::IDLE_PROC = process::create_process(0);
+        (*process::IDLE_PROC).pid = 0;
+
+        process::CURRENT_PROC = process::IDLE_PROC;
+
+        process::PROC_A = process::create_process(process::proc_a_entry as usize);
+        process::PROC_B = process::create_process(process::proc_b_entry as usize);
     }
+
+    process::yield_proc();
+    panic!("switched to idle process");
 
     common::println!("unreachable here!");
 

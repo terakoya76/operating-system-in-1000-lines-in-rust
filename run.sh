@@ -1,6 +1,8 @@
 #!/bin/bash
 set -xue
 
+cargo build
+
 # QEMUのファイルパス
 QEMU=qemu-system-riscv32
 # QEMUを起動
