@@ -111,3 +111,24 @@ fn sbi_call(
 
     SbiRet { error: a0, value: a1 }
 }
+
+macro_rules! read_csr {
+    ($reg:expr) => {{
+        let value: u32;
+        unsafe {
+            core::arch::asm!(concat!("csrr {}, ", $reg), out(reg) value);
+        }
+        value
+    }};
+}
+pub(crate) use read_csr;
+
+macro_rules! write_csr {
+    ($reg:expr, $value:expr) => {{
+        let value = $value;
+        unsafe {
+            core::arch::asm!(concat!("csrw ", $reg, ", {}"), in(reg) value);
+        }
+    }};
+}
+pub(crate) use write_csr;
