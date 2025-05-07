@@ -10,22 +10,28 @@ extern "C" {
 }
 
 #[no_mangle]
-fn kernel_main() -> ! {
-    common::println!("\n\nHello {}\n", "World!");
-    common::println!("1 + 2 = {}, {:x}\n", 1 + 2, 0x1234abcd);
-
-    loop {
+fn memset(buf: *mut u8, c: u8, n: usize) {
+    let p = buf;
+    let mut i = 0;
+    while i < n {
         unsafe {
-            core::arch::asm!(
-                "wfi",
-                // https://doc.rust-jp.rs/rust-by-example-ja/unsafe/asm.html#%E3%83%A1%E3%83%A2%E3%83%AA%E3%82%A2%E3%83%89%E3%83%AC%E3%82%B9%E3%82%AA%E3%83%9A%E3%83%A9%E3%83%B3%E3%83%89
-                // nomem:
-                // - アセンブリコードがメモリの読み書きをしないことを意味します。
-                // - デフォルトでは、インラインアセンブリはアクセス可能なメモリアドレス(例えばオペランドとして渡されたポインタや、グローバルなど)の読み書きを行うとコンパイラは仮定しています。
-                options(nostack, nomem)
-            );
+            *p.add(i) = c;
+            i += 1;
         }
     }
+}
+
+#[no_mangle]
+fn kernel_main() -> ! {
+   unsafe {
+       let bss_size = &__bss_end as *const u8 as usize - &__bss as *const u8 as usize;
+       memset(&__bss as *const u8 as *mut u8, 0, bss_size);
+   }
+
+   panic!("booted!");
+   common::println!("unreachable here!\n");
+
+   loop {}
 }
 
 #[no_mangle]
@@ -47,6 +53,7 @@ pub unsafe extern "C" fn boot() -> ! {
 }
 
 #[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
+fn panic(info: &core::panic::PanicInfo) -> ! {
+    common::println!("{}", info);
     loop {}
 }
