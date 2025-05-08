@@ -1,5 +1,5 @@
 [package]
-name = "microkernel-book-in-rust"
+name = "operating-system-in-1000-lines-in-rust"
 version = "0.1.0"
 edition = "2021"
 
