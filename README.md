@@ -12,11 +12,15 @@ $ rustup component add rustfmt
 # binutils
 $ cargo install cargo-binutils
 $ rustup component add llvm-tools
+$ rustup component add llvm-tools-preview
 ```
 
 build
 ```bash
 $ rustup run nightly cargo build
+
+# if you want build binary
+$ rustup run nightly cargo objcopy --release -- -O binary app.bin
 ```
 
 disassemble a binary
