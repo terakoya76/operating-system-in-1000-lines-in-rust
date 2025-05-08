@@ -1,0 +1,12 @@
+[package]
+name = "operating-system-in-1000-lines-in-rust"
+version = "0.1.0"
+edition = "2024"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+
+[[bin]]
+name = "kernel_elf"
+path = "src/kernel.rs"

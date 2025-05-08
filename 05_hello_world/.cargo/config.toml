@@ -1,0 +1,16 @@
+[target.riscv32i-unknown-none-elf]
+# QEMUを起動
+#   -machine virt     = virtマシンとして起動する
+#   -bios default     = デフォルトのBIOS (ここではOpenSBI) を使用する
+#   -nographic        = QEMUをウィンドウなしで起動する
+#   -serial mon:stdio = QEMUの標準入出力を仮想マシンのシリアルポートに接続する
+#   --no-reboot       = 仮想マシンがクラッシュしたら、再起動せずに停止させる (デバッグに便利)
+runner = "qemu-system-riscv32 -machine virt -bios default -nographic -serial mon:stdio --no-reboot -kernel"
+rustflags = [
+  # https://doc.rust-lang.org/rustc/codegen-options/index.html
+  "-C", "link-arg=-Tkernel.ld",
+  "-C", "link-arg=-Map=kernel.map",
+]
+
+[build]
+target = "riscv32i-unknown-none-elf"

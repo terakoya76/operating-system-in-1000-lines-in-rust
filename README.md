@@ -3,13 +3,27 @@
 https://operating-system-in-1000-lines.vercel.app/ja/
 
 ## Dev
+
+tools
+```bash
+# linter
+$ rustup component add rustfmt
+
+# binutils
+$ cargo install cargo-binutils
+$ rustup component add llvm-tools
+```
+
 build
 ```bash
 $ rustup run nightly cargo build
 ```
 
-check assembly
+disassemble a binary
 ```bash
+$ rustup run nightly cargo objdump --release -- --disassemble --no-show-raw-insn
+
+# or llvm-utils
 $ llvm-objdump -d target/riscv32i-unknown-none-elf/debug/kernel_elf
 ```
 
@@ -32,6 +46,12 @@ operating-system-in-1000-lines-in-rust/src/main.rs:40
 
 check symbol(function, variable) address, type and name in the object file
 ```bash
+$ rustup run nightly cargo nm --release -- --print-size --size-sort | grep __free_ram
+    Finished `release` profile [optimized] target(s) in 0.00s
+80233000 00000000 B __free_ram
+84233000 00000000 B __free_ram_end
+
+# or llvm-utils
 $ llvm-nm target/riscv32i-unknown-none-elf/debug/kernel_elf | grep __free_ram
 80224000 B __free_ram
 84224000 B __free_ram_end
