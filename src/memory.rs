@@ -1,10 +1,10 @@
-extern "C" {
+unsafe extern "C" {
     static __kernel_base: u8;
     static __free_ram: u8;
     static __free_ram_end: u8;
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn memset(buf: *mut u8, c: u8, n: usize) {
     let p = buf;
     let mut i = 0;
@@ -21,7 +21,6 @@ pub const PAGE_SIZE: usize = 4096;
 pub type Paddr = usize;
 pub type Vaddr = usize;
 
-#[no_mangle]
 pub fn alloc_pages(n: usize) -> Paddr {
     // staticを使って前回の割り当て位置を記憶
     static mut NEXT_PADDR: Paddr = 0;

@@ -3,13 +3,13 @@
 
 mod common;
 
-extern "C" {
+unsafe extern "C" {
     static __bss: u8;
     static __bss_end: u8;
     static __stack_top: u8;
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 fn memset(buf: *mut u8, c: u8, n: usize) {
     let p = buf;
     let mut i = 0;
@@ -21,7 +21,7 @@ fn memset(buf: *mut u8, c: u8, n: usize) {
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 fn kernel_main() -> ! {
     unsafe {
         let bss_size = &__bss_end as *const u8 as usize - &__bss as *const u8 as usize;
@@ -34,22 +34,24 @@ fn kernel_main() -> ! {
     loop {}
 }
 
-#[no_mangle]
-#[link_section = ".text.boot"]
+#[unsafe(no_mangle)]
+#[unsafe(link_section = ".text.boot")]
 pub unsafe extern "C" fn boot() -> ! {
-    // asm macro
-    // - https://doc.rust-lang.org/nightly/rust-by-example/unsafe/asm.html
-    core::arch::asm!(
-        "mv sp, {stack_top}\n
-         j {kernel_main}\n",
-        // asm template
-        // https://doc.rust-lang.org/reference/inline-assembly.html#r-asm.ts-args.order
-        stack_top = in(reg) &__stack_top,
-        // asm sym
-        // https://doc.rust-lang.org/reference/inline-assembly.html#r-asm.operand-type.supported-operands.sym
-        kernel_main = sym kernel_main,
-        options(noreturn)
-    );
+    unsafe {
+        // asm macro
+        // - https://doc.rust-lang.org/nightly/rust-by-example/unsafe/asm.html
+        core::arch::asm!(
+            "mv sp, {stack_top}",
+            "j {kernel_main}",
+            // asm template
+            // https://doc.rust-lang.org/reference/inline-assembly.html#r-asm.ts-args.order
+            stack_top = in(reg) &__stack_top,
+            // asm sym
+            // https://doc.rust-lang.org/reference/inline-assembly.html#r-asm.operand-type.supported-operands.sym
+            kernel_main = sym kernel_main,
+            options(noreturn)
+        );
+    }
 }
 
 #[panic_handler]

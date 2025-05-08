@@ -25,7 +25,6 @@ static mut PROCS: [Process; PROCS_MAX] = [Process {
     stack: [0; 8192],
 }; PROCS_MAX];
 
-#[no_mangle]
 #[unsafe(naked)]
 pub unsafe extern "C" fn switch_context(_prev_sp: *mut usize, _next_sp: *mut usize) {
     core::arch::naked_asm!(
@@ -66,7 +65,6 @@ pub unsafe extern "C" fn switch_context(_prev_sp: *mut usize, _next_sp: *mut usi
     );
 }
 
-#[no_mangle]
 pub fn create_process(pc: usize) -> &'static mut Process {
     // 空いているプロセス管理構造体(Process Control Block)を探す
     let (proc_index, proc) = unsafe {
@@ -133,7 +131,6 @@ pub fn create_process(pc: usize) -> &'static mut Process {
 pub static mut CURRENT_PROC: *mut Process = core::ptr::null_mut();
 pub static mut IDLE_PROC: *mut Process = core::ptr::null_mut();
 
-#[no_mangle]
 pub fn yield_proc() {
     unsafe {
         // 実行可能なプロセスを探す
@@ -191,7 +188,6 @@ pub fn yield_proc() {
     }
 }
 
-#[no_mangle]
 fn delay() {
     for _ in 0..30000000 {
         unsafe {
@@ -203,7 +199,6 @@ fn delay() {
 pub static mut PROC_A: *mut Process = core::ptr::null_mut();
 pub static mut PROC_B: *mut Process = core::ptr::null_mut();
 
-#[no_mangle]
 pub fn proc_a_entry() {
     crate::common::println!("starting process A");
 
@@ -237,7 +232,6 @@ pub fn proc_a_entry() {
     }
 }
 
-#[no_mangle]
 pub fn proc_b_entry() {
     crate::common::println!("starting process B");
 
