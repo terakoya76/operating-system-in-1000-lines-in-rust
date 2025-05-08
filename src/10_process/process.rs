@@ -1,18 +1,19 @@
-use crate::memory::{Vaddr, SATP_SV32};
-
 #[derive(Clone, Copy, PartialEq)]
 enum ProcessState {
     Unused,
     Runnable,
 }
 
+// vaddr_t type would need to be defined based on your architecture
+// Assuming it's a pointer-sized unsigned integer
+type Vaddr = usize;
+
 #[derive(Clone, Copy)]
 pub struct Process {
-    pub pid: i32,           // プロセスID
-    state: ProcessState,    // プロセスの状態
-    sp: Vaddr,              // コンテキストスイッチ時のスタックポインタ
-    page_table: *mut usize, // 動的サイズの配列へのポインタ
-    stack: [u8; 8192],      // カーネルスタック
+    pub pid: i32,        // プロセスID
+    state: ProcessState, // プロセスの状態
+    sp: Vaddr,           // コンテキストスイッチ時のスタックポインタ
+    stack: [u8; 8192],   // カーネルスタック
 }
 
 const PROCS_MAX: usize = 8;
@@ -21,7 +22,6 @@ static mut PROCS: [Process; PROCS_MAX] = [Process {
     pid: 0,
     state: ProcessState::Unused,
     sp: 0,
-    page_table: core::ptr::null_mut(),
     stack: [0; 8192],
 }; PROCS_MAX];
 
@@ -120,18 +120,9 @@ pub fn create_process(pc: usize) -> &'static mut Process {
         sp = sp.sub(1);
         *sp = pc; // ra
 
-        // page_table setup
-        let page_table_addr = crate::memory::alloc_pages(1);
-        // crate::common::println!("page_table_addr: {}", page_table_addr);
-        let page_table_ptr = page_table_addr as *mut usize;
-        // crate::common::println!("page_table_ptr: {:?}", &page_table_ptr);
-        let page_table = core::slice::from_raw_parts_mut(page_table_ptr, 1024);
-        crate::memory::init_page_table(page_table);
-
         // プロセス情報を更新
         proc.pid = (proc_index + 1) as i32;
         proc.state = ProcessState::Runnable;
-        proc.page_table = page_table_ptr;
         proc.sp = sp as Vaddr;
     }
 
@@ -172,21 +163,16 @@ pub fn yield_proc() {
             let prev = CURRENT_PROC;
             CURRENT_PROC = next;
 
+            // crate::common::println!("context switch, prev pid:{}, next pid:{}", (*prev).pid, (*next).pid);
+
             if !prev.is_null() && !next.is_null() {
                 let prev_ref = &mut *prev;
                 let next_ref = &mut *next;
 
-                // crate::common::println!("context switch, prev pid:{}, next pid:{}", prev_ref.pid, next_ref.pid);
-
+                // スタックポインタは下位アドレスの方向に伸びる(スタック領域の末尾から使われていく)ため、
+                // `next.stack[next.stack.len()-1]`バイト目のアドレスをカーネルスタックの初期値として設定します。
                 core::arch::asm!(
-                    // ページテーブルの物理ページ番号を計算
-                    "sfence.vma",
-                    "csrw satp, {satp}",
-                    "sfence.vma",
-                    // スタックポインタは下位アドレスの方向に伸びる(スタック領域の末尾から使われていく)ため、
-                    // `next.stack[next.stack.len()-1]`バイト目のアドレスをカーネルスタックの初期値として設定します。
                     "csrw sscratch, {sscratch}",
-                    satp = in(reg) (SATP_SV32 | (next_ref.page_table as usize / crate::memory::PAGE_SIZE)) as usize,
                     sscratch = in(reg) &next_ref.stack[next_ref.stack.len()-1] as *const u8 as usize,
                     options(nomem, nostack)
                 );
@@ -219,7 +205,7 @@ pub static mut PROC_B: *mut Process = core::ptr::null_mut();
 
 #[no_mangle]
 pub fn proc_a_entry() {
-    crate::common::println!("\nstarting process A");
+    crate::common::println!("starting process A");
 
     loop {
         crate::common::print!("A");
@@ -253,7 +239,7 @@ pub fn proc_a_entry() {
 
 #[no_mangle]
 pub fn proc_b_entry() {
-    crate::common::println!("\nstarting process B");
+    crate::common::println!("starting process B");
 
     loop {
         crate::common::print!("B");

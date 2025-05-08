@@ -116,11 +116,6 @@ fn sbi_call(
             in("a5") a5,
             in("a6") a6,
             in("a7") a7,
-            // https://doc.rust-jp.rs/rust-by-example-ja/unsafe/asm.html#%E3%83%A1%E3%83%A2%E3%83%AA%E3%82%A2%E3%83%89%E3%83%AC%E3%82%B9%E3%82%AA%E3%83%9A%E3%83%A9%E3%83%B3%E3%83%89
-            // nostack:
-            // - アセンブリコードがスタックにデータをプッシュしないことを意味します。
-            // - これにより、コンパイラはx86-64のスタックレッドゾーンなどの最適化を利用し、スタックポインタの調整を避けることができます。
-            options(nostack)
         );
     }
 
@@ -134,7 +129,7 @@ macro_rules! read_csr {
     ($reg:expr) => {{
         let value: u32;
         unsafe {
-            core::arch::asm!(concat!("csrr {}, ", $reg), out(reg) value);
+            core::arch::asm!(concat!("csrr {}, ", $reg), out(reg) value, options(nomem, nostack));
         }
         value
     }};
@@ -145,7 +140,7 @@ macro_rules! write_csr {
     ($reg:expr, $value:expr) => {{
         let value = $value;
         unsafe {
-            core::arch::asm!(concat!("csrw ", $reg, ", {}"), in(reg) value);
+            core::arch::asm!(concat!("csrw ", $reg, ", {}"), in(reg) value, options(nomem, nostack));
         }
     }};
 }
