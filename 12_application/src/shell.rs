@@ -6,7 +6,7 @@ unsafe extern "C" {
 }
 
 #[unsafe(no_mangle)]
-#[unsafe(link_section = ".text.boot")]
+#[unsafe(link_section = ".text.start")]
 pub unsafe extern "C" fn start() -> ! {
     unsafe {
         // スタックポインタを設定し、main を呼び出す
@@ -33,7 +33,6 @@ fn putchar(_ch: u8) {
 }
 
 #[unsafe(no_mangle)]
-#[allow(unconditional_recursion)]
 fn exit() -> ! {
     loop {}
 }

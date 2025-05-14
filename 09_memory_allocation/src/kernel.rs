@@ -73,7 +73,7 @@ const PAGE_SIZE: usize = 4096;
 // 物理アドレスの型
 type PAddr = usize;
 
-fn alloc_pages(n: u32) -> PAddr {
+fn alloc_pages(n: usize) -> PAddr {
     // staticを使って前回の割り当て位置を記憶
     static mut NEXT_PADDR: PAddr = 0;
 
