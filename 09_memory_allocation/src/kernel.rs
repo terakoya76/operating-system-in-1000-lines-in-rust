@@ -137,7 +137,7 @@ struct TrapFrame {
 
 #[unsafe(no_mangle)]
 #[repr(align(4))]
-unsafe extern "C" fn kernel_entry() {
+fn kernel_entry() {
     unsafe {
         core::arch::asm!(
             // SCRATCHレジスタ

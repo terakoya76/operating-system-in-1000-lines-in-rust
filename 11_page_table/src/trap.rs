@@ -58,7 +58,7 @@ struct TrapFrame {
 
 #[unsafe(no_mangle)]
 #[repr(align(4))]
-pub unsafe extern "C" fn kernel_entry() {
+pub fn kernel_entry() {
     unsafe {
         /*
         SCRATCHレジスタ
