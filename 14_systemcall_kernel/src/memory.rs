@@ -102,6 +102,7 @@ pub fn init_page_table(table: &mut [usize], image: *const u8, image_size: usize)
             paddr += PAGE_SIZE as Paddr;
         }
 
+        // image を memory に展開
         let mut off: usize = 0;
         while off < image_size {
             let page = alloc_pages(1);

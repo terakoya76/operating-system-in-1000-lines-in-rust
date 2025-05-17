@@ -1,4 +1,4 @@
-use crate::common::{SYS_EXIT, SYS_GETCHAR, SYS_PUTCHAR};
+use crate::common::{SCAUSE_ECALL, SYS_EXIT, SYS_GETCHAR, SYS_PUTCHAR};
 use crate::process::{CURRENT_PROC, ProcessState};
 
 macro_rules! read_csr {
@@ -164,8 +164,6 @@ pub fn kernel_entry() {
         );
     }
 }
-
-const SCAUSE_ECALL: usize = 8;
 
 unsafe fn handle_trap(f: *mut TrapFrame) {
     let scause = read_csr!("scause");

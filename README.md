@@ -25,7 +25,7 @@ $ rustup run nightly cargo objcopy --release -- -O binary app.bin
 
 disassemble a binary
 ```bash
-$ rustup run nightly cargo objdump --release -- --disassemble --no-show-raw-insn
+$ rustup run nightly cargo objdump -- --disassemble --no-show-raw-insn
 
 # or llvm-utils
 $ llvm-objdump -d target/riscv32i-unknown-none-elf/debug/kernel_elf

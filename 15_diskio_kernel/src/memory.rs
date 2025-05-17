@@ -1,11 +1,12 @@
+use crate::common::{
+    PAGE_R, PAGE_SIZE, PAGE_U, PAGE_V, PAGE_W, PAGE_X, USER_BASE, VIRTIO_BLK_PADDR,
+};
+
 unsafe extern "C" {
     static __kernel_base: u8;
     static __free_ram: u8;
     static __free_ram_end: u8;
 }
-
-pub const USER_BASE: usize = 0x1000000;
-pub const PAGE_SIZE: usize = 4096;
 
 pub type Paddr = usize;
 pub type Vaddr = usize;
@@ -23,7 +24,8 @@ pub fn memset(buf: *mut u8, c: u8, n: usize) {
 }
 
 #[unsafe(no_mangle)]
-fn memcpy(dst: *mut u8, src: *const u8, n: usize) -> *mut u8 {
+// core::ptr::copy_nonoverlapping を使ったほうがよい
+pub fn memcpy(dst: *mut u8, src: *const u8, n: usize) -> *mut u8 {
     let mut d = dst;
     let mut s = src;
     let mut count = n;
@@ -65,28 +67,12 @@ pub fn alloc_pages(n: usize) -> Paddr {
     }
 }
 
-/*
-ページテーブルエントリー(RISC-V Sv32)
-- PPN[1] (12 ビット)
-- PPN[0] (10ビット)
-- Flags (10ビット)
-
-仮想アドレス(RISC-V Sv32)
-- VPN[1] (10 ビット)
-- VPN[0] (10ビット)
-- Offset (12ビット)
-
-https://vlsi.jp/UnderstandMMU.html
-*/
-pub const SATP_SV32: usize = 1 << 31;
-const PAGE_V: usize = 1 << 0; // 有効化ビット
-const PAGE_R: usize = 1 << 1; // 読み込み可能
-const PAGE_W: usize = 1 << 2; // 書き込み可能
-const PAGE_X: usize = 1 << 3; // 実行可能
-const PAGE_U: usize = 1 << 4; // ユーザーモードでアクセス可能
-
 fn is_aligned(value: usize, align: usize) -> bool {
     value % align == 0
+}
+
+pub fn align_up(value: usize, align: usize) -> usize {
+    ((value + align - 1) / align) * align
 }
 
 pub fn init_page_table(table: &mut [usize], image: *const u8, image_size: usize) {
@@ -101,6 +87,9 @@ pub fn init_page_table(table: &mut [usize], image: *const u8, image_size: usize)
             map_page(table, paddr, paddr, PAGE_R | PAGE_W | PAGE_X);
             paddr += PAGE_SIZE as Paddr;
         }
+
+        // 各プロセスのページテーブルに virtio-blk のMMIO領域をマップ
+        map_page(table, VIRTIO_BLK_PADDR, VIRTIO_BLK_PADDR, PAGE_R | PAGE_W);
 
         // image を memory に展開
         let mut off: usize = 0;
@@ -126,7 +115,7 @@ pub fn init_page_table(table: &mut [usize], image: *const u8, image_size: usize)
                 PAGE_U | PAGE_R | PAGE_W | PAGE_X,
             );
 
-            off += PAGE_SIZE as usize;
+            off += PAGE_SIZE;
         }
     }
 }
