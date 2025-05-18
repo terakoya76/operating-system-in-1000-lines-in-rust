@@ -390,6 +390,7 @@ pub fn read_write_disk(buf: &mut [u8], sector: usize, is_write: bool) {
 
         // 読み込み処理の場合は、バッファにデータをコピーする
         if !is_write {
+            //crate::common::println!("read: {:?}", &blk_req.data);
             crate::memory::memcpy(buf.as_mut_ptr(), blk_req.data.as_ptr(), SECTOR_SIZE);
         }
     }

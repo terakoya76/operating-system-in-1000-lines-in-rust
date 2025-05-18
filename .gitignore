@@ -20,6 +20,10 @@ target/
 
 /target
 
+# build
+tmp
+*.tar
+
 # qemu
 kernel.map
 user.map

@@ -4,6 +4,7 @@
 
 mod common;
 mod disk;
+mod fs;
 mod memory;
 mod process;
 mod trap;
@@ -57,20 +58,23 @@ fn kernel_main() -> ! {
     //common::println!("alloc_pages test: paddr1={:x}", paddr1);
 
     trap::write_csr!("stvec", trap::kernel_entry);
+
     disk::virtio_blk_init();
 
-    let mut buf = [0u8; common::SECTOR_SIZE];
-    disk::read_write_disk(&mut buf, 0, false);
-    let str_slice = core::str::from_utf8(&buf).unwrap_or("Invalid UTF-8 data");
-    common::println!("first sector: {}", str_slice);
+    // let mut buf = [0u8; common::SECTOR_SIZE];
+    // disk::read_write_disk(&mut buf, 0, false);
+    // let str_slice = core::str::from_utf8(&buf).unwrap_or("Invalid UTF-8 data");
+    // common::println!("first sector: {}", str_slice);
 
     // 新しい文字列をバッファに書き込み
-    let message = b"hello from kernel!!!\n";
-    buf.fill(0);
-    buf[..message.len()].copy_from_slice(message);
+    // let message = b"hello from kernel!!!\n";
+    // buf.fill(0);
+    // buf[..message.len()].copy_from_slice(message);
 
     // セクター0へ書き込み
-    disk::read_write_disk(&mut buf, 0, true);
+    // disk::read_write_disk(&mut buf, 0, true);
+
+    fs::fs_init();
 
     unsafe {
         // common::println!("binary_shell_bin_start: {:?}", &_binary_target_riscv32i_unknown_none_elf_debug_shell_bin_start as *const u8 as usize);

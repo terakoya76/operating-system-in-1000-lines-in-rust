@@ -1,0 +1,30 @@
+[build]
+target = "riscv32i-unknown-none-elf"
+
+[target.riscv32i-unknown-none-elf]
+# QEMUを起動
+#   -machine virt     = virtマシンとして起動する
+#   -bios default     = デフォルトのBIOS (ここではOpenSBI) を使用する
+#   -nographic        = QEMUをウィンドウなしで起動する
+#   -serial mon:stdio = QEMUの標準入出力を仮想マシンのシリアルポートに接続する
+#   --no-reboot       = 仮想マシンがクラッシュしたら、再起動せずに停止させる (デバッグに便利)
+#
+#   -d unimp,guest_errors,int,cpu_reset = デバッグログ有効化
+#   -D qemu.log                         = デバッグ情報を`qemu.log`というファイルに出力
+#
+#   -drive id=drive0,file=lorem.txt,format=raw,if=none = 仮想ドライブを設定
+#     id=drive0                                        = このドライブに`drive0`という識別子を付与
+#     file=lorem.txt                                   = `lorem.txt`ファイルをドライブのバッキングストアとして使用
+#     format=raw                                       = ファイルフォーマットをraw (未処理のバイナリ形式) として指定
+#     if=none                                          = デフォルトのインターフェースを使用せず、後続の`-device`オプションで明示的に指定することを示す
+#
+#   -device virtio-blk-device,drive=drive0,bus=virtio-mmio-bus.0 = 仮想デバイスを設定
+#     virtio-blk-device                                          = `virtio`ブロックデバイスを使用 (高速なI/O性能を提供するモダンな仮想化インターフェース)
+#     drive=drive0                                               = 先に定義した`drive0`をこのデバイスに接続
+#     bus=virtio-mmio-bus.0                                      = このデバイスを`virtio-mmio-bus.0`バスに接続 (メモリマップドI/Oを使用した`virtio`バス)
+runner = "qemu-system-riscv32 -machine virt -bios default -nographic -serial mon:stdio --no-reboot -d unimp,guest_errors,int,cpu_reset -D qemu.log -drive id=drive0,file=disk.tar,format=raw,if=none -device virtio-blk-device,drive=drive0,bus=virtio-mmio-bus.0 -kernel"
+rustflags = [
+  # https://doc.rust-lang.org/rustc/codegen-options/index.html
+  "-C", "link-arg=-Tkernel.ld",
+  "-C", "link-arg=-Map=kernel.map",
+]
