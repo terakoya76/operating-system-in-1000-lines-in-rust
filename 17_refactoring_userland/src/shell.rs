@@ -27,15 +27,13 @@ pub unsafe extern "C" fn start() -> ! {
 
 #[unsafe(no_mangle)]
 fn main() -> ! {
-    // common::println!("\nHello World from {}!", "shell");
-
     loop {
         'prompt: loop {
             common::print!("> ");
             let mut cmdline = [0u8; 128];
             for i in 0.. {
                 let c = common::user_getchar() as u8;
-                common::user_putchar(c.try_into().unwrap());
+                common::user_putchar(c as char);
 
                 if i == cmdline.len() - 1 {
                     common::println!("command line too long");
@@ -67,30 +65,30 @@ fn main() -> ! {
             match command {
                 "hello" => {
                     common::println!("Hello world from shell!");
-                },
+                }
                 "exit" => {
                     // common::println!("exit from shell!");
                     exit();
-                },
+                }
                 "readfile" => {
                     // common::println!("read from shell!");
                     let filename = b"hello.txt";
                     let mut buf: [u8; 128] = [0; 128];
                     let buf_len = buf.len();
                     common::user_readfile(filename, filename.len(), &mut buf, buf_len);
-                    let read = core::str::from_utf8(
-                        &buf[..buf.iter().position(|&c| c == 0).unwrap()])
-                        .unwrap();
+                    let read =
+                        core::str::from_utf8(&buf[..buf.iter().position(|&c| c == 0).unwrap()])
+                            .unwrap();
                     crate::common::println!("readfile: {:?}", read);
-                },
+                }
                 "writefile" => {
                     let filename = b"hello.txt";
                     let buf = b"Hello from shell!\n";
                     common::user_writefile(filename, filename.len(), buf, buf.len());
-                },
+                }
                 _ => {
                     common::println!("unknown command: {}", command);
-                },
+                }
             }
 
             break;

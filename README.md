@@ -17,15 +17,15 @@ $ rustup component add llvm-tools-preview
 
 build
 ```bash
-$ rustup run nightly cargo build
+$ cargo build
 
 # if you want build binary
-$ rustup run nightly cargo objcopy --release -- -O binary app.bin
+$ cargo objcopy --release -- -O binary app.bin
 ```
 
 disassemble a binary
 ```bash
-$ rustup run nightly cargo objdump -- --disassemble --no-show-raw-insn
+$ cargo objdump -- --disassemble --no-show-raw-insn
 
 # or llvm-utils
 $ llvm-objdump -d target/riscv32i-unknown-none-elf/debug/kernel_elf
@@ -33,12 +33,12 @@ $ llvm-objdump -d target/riscv32i-unknown-none-elf/debug/kernel_elf
 
 run os
 ```bash
-$ rustup run nightly cargo run
+$ cargo run
 ```
 
 map a memory address to the LoC
 ```bash
-$ rustup run nightly cargo run
+$ cargo run
 (snip)
 panicked at src/main.rs:190:5:
 unexpected trap scause=2, stval=c0001073, sepc=80200c5c
@@ -50,7 +50,7 @@ operating-system-in-1000-lines-in-rust/src/main.rs:40
 
 check symbol(function, variable) address, type and name in the object file
 ```bash
-$ rustup run nightly cargo nm --release -- --print-size --size-sort | grep __free_ram
+$ cargo nm --release -- --print-size --size-sort | grep __free_ram
     Finished `release` profile [optimized] target(s) in 0.00s
 80233000 00000000 B __free_ram
 84233000 00000000 B __free_ram_end
